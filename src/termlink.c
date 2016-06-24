@@ -29,6 +29,7 @@
 #include "USB/cdc.h"
 #include "USB/dfu.h"
 #include "USB/webusb.h"
+#include "USB/winusb.h"
 
 #include "DFU/DFU.h"
 
@@ -167,6 +168,7 @@ int main(void) {
     webusb_setup(usbd_dev,
                  http_urls, sizeof(http_urls)/sizeof(http_urls[0]),
                  https_urls, sizeof(https_urls)/sizeof(https_urls[0]));
+    winusb_setup(usbd_dev);
 
     uint16_t cdc_len = 0;
     uint8_t cdc_buf[USB_CDC_MAX_PACKET_SIZE];

@@ -32,6 +32,12 @@ ifeq ($(TARGET),STLINK-DFUBOOT)
 	LDSCRIPT			?= ./stm32f103/stm32f103x8-dfuboot.ld
 	ARCH				= STM32F1
 endif
+ifeq ($(TARGET),STLINK-WEBDFU)
+	TARGET_COMMON_DIR	:= ./stm32f103
+	TARGET_SPEC_DIR		:= ./stm32f103/stlink
+	LDSCRIPT			?= ./stm32f103/stm32f103x8-webdfu.ld
+	ARCH				= STM32F1
+endif
 ifeq ($(TARGET),BLUEPILL)
 	TARGET_COMMON_DIR	:= ./stm32f103
 	TARGET_SPEC_DIR		:= ./stm32f103/bluepill
@@ -42,6 +48,12 @@ ifeq ($(TARGET),BLUEPILL-DFUBOOT)
 	TARGET_COMMON_DIR	:= ./stm32f103
 	TARGET_SPEC_DIR		:= ./stm32f103/bluepill
 	LDSCRIPT			?= ./stm32f103/stm32f103x8-dfuboot.ld
+	ARCH				= STM32F1
+endif
+ifeq ($(TARGET),BLUEPILL-WEBDFU)
+	TARGET_COMMON_DIR	:= ./stm32f103
+	TARGET_SPEC_DIR		:= ./stm32f103/bluepill
+	LDSCRIPT			?= ./stm32f103/stm32f103x8-webdfu.ld
 	ARCH				= STM32F1
 endif
 ifndef ARCH
