@@ -28,6 +28,7 @@
 #include "USB/composite_usb_conf.h"
 #include "USB/cdc.h"
 #include "USB/dfu.h"
+#include "USB/webusb.h"
 
 #include "DFU/DFU.h"
 
@@ -130,6 +131,15 @@ static void on_dfu_request(void) {
     do_reset_to_dfu = true;
 }
 
+static const char* http_urls[] = {
+    "localhost:8000",
+};
+
+static const char* https_urls[] = {
+    "devanlai.github.io/webdfu/dfu-util/",
+    "localhost:8000",
+};
+
 int main(void) {
     DFU_maybe_jump_to_bootloader();
 
@@ -154,6 +164,9 @@ int main(void) {
     cdc_setup(usbd_dev, &on_host_rx, &on_host_tx,
               NULL, &on_set_line_coding, &on_get_line_coding);
     dfu_setup(usbd_dev, &on_dfu_request);
+    webusb_setup(usbd_dev,
+                 http_urls, sizeof(http_urls)/sizeof(http_urls[0]),
+                 https_urls, sizeof(https_urls)/sizeof(https_urls[0]));
 
     uint16_t cdc_len = 0;
     uint8_t cdc_buf[USB_CDC_MAX_PACKET_SIZE];
