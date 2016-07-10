@@ -25,6 +25,19 @@
    the special OS descriptor string */
 #define WINUSB_MS_VENDOR_CODE 0x21
 
+struct winusb_extended_property_device_interface_guid_descriptor {
+    uint32_t dwLength;
+    uint16_t bcdVersion;
+    uint16_t wIndex;
+    uint16_t wCount;
+    uint32_t dwSize;
+    uint32_t dwPropertyDataType;
+    uint16_t wPropertyNameLength;
+    const char bPropertyName[42];
+    uint32_t dwPropertyDataLength;
+    const char bPropertyData[80];
+} __attribute__((packed));
+
 extern void winusb_setup(usbd_device* usbd_dev);
 
 #endif
