@@ -23,8 +23,9 @@ TARGET ?= STLINK
 include targets.mk
 
 DFU_UTIL = dfu-util
-DFUSE_VID_PID := 0483:df11
-DAP42_VID_PID := 1209:da42
+
+RUN_VID_PID := 1209:0002
+DFU_VID_PID := 1209:0001
 
 SRCS := $(wildcard *.c)
 SRCS += $(wildcard USB/*.c)
@@ -41,10 +42,10 @@ DEPS  = $(SRCS:.c=.d)
 
 .DEFAULT_GOAL := $(BINARY).bin
 
-%.dfuse-flash: %.bin
-	$(DFU_UTIL) -d $(DAP42_VID_PID),$(DFUSE_VID_PID) -a 0 -s 0x08000000:leave -D $(<)
+%.dfu-download: %.bin
+	$(DFU_UTIL) -d $(RUN_VID_PID),$(DFU_VID_PID) -D $(<)
 
-dfuse-flash: $(BINARY).dfuse-flash
+dfu-download: $(BINARY).dfu-download
 
 clean::
 	@rm -f $(OBJS)
@@ -58,7 +59,7 @@ size: $(OBJS) $(BINARY).elf
 debug: $(BINARY).elf
 	-$(GDB) --tui --eval "target remote | $(OOCD) -f $(OOCD_INTERFACE) -f $(OOCD_BOARD) -f ../debug.cfg" $(BINARY).elf
 
-.PHONY += debug size dfuse-flash
+.PHONY += debug size dfu-download
 
 OBJS := $(sort $(OBJS))
 
