@@ -54,15 +54,9 @@ static const struct winusb_extended_property_device_interface_guid_descriptor wi
     .dwSize = 136,
     .dwPropertyDataType = WINUSB_PROP_DATA_TYPE_REG_REG_MULTI_SZ,
     .wPropertyNameLength = 42,
-    .bPropertyName = {'D', '\0', 'e', '\0', 'v', '\0', 'i', '\0', 'c', '\0', 'e', '\0',
-                      'I', '\0', 'n', '\0', 't', '\0', 'e', '\0', 'r', '\0', 'f', '\0', 'a', '\0', 'c', '\0', 'e', '\0',
-                      'G', '\0', 'U', '\0', 'I', '\0', 'D', '\0', 's', '\0', '\0', '\0'},
+    .bPropertyName = u"DeviceInterfaceGUIDs",
     .dwPropertyDataLength = 80,
-    .bPropertyData = {'{', '\0', 'D', '\0', 'E', '\0', 'F', '\0', '0', '\0', 'D', '\0', '6', '\0', 'E', '\0', '1', '\0', '-','\0',
-                      '7', '\0', 'C', '\0', '0', '\0', '7', '\0', '-', '\0',
-                      '4', '\0', 'C', '\0', 'B', '\0', '7', '\0', '-', '\0',
-                      '9', '\0', '2', '\0', '8', '\0', '5', '\0', '-', '\0',
-                      '6', '\0', '3', '\0', '3', '\0', 'F', '\0', '1', '\0', '8', '\0', '3', '\0', '0', '\0', '9', '\0', '3', '\0', 'D', '\0', '7', '\0', '}', '\0', '\0', '\0'},
+    .bPropertyData = u"{DEF0D6E1-7C07-4CB7-9285-633F183093D7}\0"
 };
 
 static int winusb_control_vendor_request(usbd_device *usbd_dev,
@@ -113,10 +107,5 @@ void winusb_setup(usbd_device* usbd_dev) {
 
     /* Windows probes the compatible ID before setting the configuration,
        so also register the callback now */
-
-    usbd_register_control_callback(
-        usbd_dev,
-        USB_REQ_TYPE_VENDOR,
-        USB_REQ_TYPE_TYPE,
-        winusb_control_vendor_request);
+    winusb_set_config(usbd_dev, 0x0000);
 }

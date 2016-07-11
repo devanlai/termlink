@@ -33,9 +33,9 @@ struct winusb_extended_property_device_interface_guid_descriptor {
     uint32_t dwSize;
     uint32_t dwPropertyDataType;
     uint16_t wPropertyNameLength;
-    const char bPropertyName[42];
+    const uint16_t bPropertyName[21];
     uint32_t dwPropertyDataLength;
-    const char bPropertyData[80];
+    const uint16_t bPropertyData[];
 } __attribute__((packed));
 
 extern void winusb_setup(usbd_device* usbd_dev);
