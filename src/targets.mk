@@ -56,6 +56,24 @@ ifeq ($(TARGET),BLUEPILL-WEBDFU)
 	LDSCRIPT			?= ./stm32f103/stm32f103x8-webdfu.ld
 	ARCH				= STM32F1
 endif
+ifeq ($(TARGET),MAPLEMINI)
+	TARGET_COMMON_DIR	:= ./stm32f103
+	TARGET_SPEC_DIR		:= ./stm32f103/maplemini
+	LDSCRIPT			?= ./stm32f103/stm32f103xb.ld
+	ARCH				= STM32F1
+endif
+ifeq ($(TARGET),MAPLEMINI-DFUBOOT)
+	TARGET_COMMON_DIR	:= ./stm32f103
+	TARGET_SPEC_DIR		:= ./stm32f103/maplemini
+	LDSCRIPT			?= ./stm32f103/stm32f103xb-dfuboot.ld
+	ARCH				= STM32F1
+endif
+ifeq ($(TARGET),MAPLEMINI-WEBDFU)
+	TARGET_COMMON_DIR	:= ./stm32f103
+	TARGET_SPEC_DIR		:= ./stm32f103/maplemini
+	LDSCRIPT			?= ./stm32f103/stm32f103xb-webdfu.ld
+	ARCH				= STM32F1
+endif
 ifndef ARCH
 $(error Unknown target $(TARGET))
 endif

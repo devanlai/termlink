@@ -21,17 +21,30 @@
 #include <libopencm3/stm32/st_usbfs.h>
 
 #include "USB/usb_setup.h"
+#include "config.h"
 
 const usbd_driver* target_usb_init(void) {
     rcc_periph_reset_pulse(RST_USB);
 
-    /* Force re-enumeration */
+#if HAVE_USB_PULLUP_CONTROL
+    /* Enable USB pullup to connect */
+    if (USB_PULLUP_ACTIVE_HIGH) {
+        gpio_set(USB_PULLUP_GPIO_PORT, USB_PULLUP_GPIO_PIN);
+    } else {
+        gpio_clear(USB_PULLUP_GPIO_PORT, USB_PULLUP_GPIO_PIN);
+    }
+#else
+    /* Override hard-wired USB pullup to disconnect and reconnect */
     rcc_periph_clock_enable(RCC_GPIOA);
+    /* Drive the USB DP pin to override the pull-up */
     gpio_set_mode(GPIOA, GPIO_MODE_OUTPUT_10_MHZ,
                   GPIO_CNF_OUTPUT_PUSHPULL, GPIO12);
     gpio_clear(GPIOA, GPIO12);
     int i;
-    for (i = 0; i < 800000; i++)
+    for (i = 0; i < 800000; i++) {
         __asm__("nop");
+    }
+#endif
+
     return &st_usbfs_v1_usb_driver;
 }
