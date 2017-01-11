@@ -25,7 +25,7 @@ include targets.mk
 DFU_UTIL = dfu-util
 
 RUN_VID_PID := 1209:0002
-DFU_VID_PID := 1209:0001
+DFU_VID_PID := 1209:db42
 
 SRCS := $(wildcard *.c)
 SRCS += $(wildcard USB/*.c)
