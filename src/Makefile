@@ -22,9 +22,15 @@ OPENCM3_DIR = ../libopencm3
 TARGET ?= STLINK
 include targets.mk
 
-DFU_UTIL = dfu-util
-DFUSE_VID_PID := 0483:df11
-DAP42_VID_PID := 1209:da42
+DFU_UTIL       ?= dfu-util
+DFUSE_VID_PID  := 0483:df11
+DAP42_VID_PID  := 1209:0001
+DFU_VID_PID    ?= $(DFUSE_VID_PID)
+APP_VID_PID    ?= $(DAP42_VID_PID)
+
+ifeq ($(ARCH),STM32F0)
+	DFUSE_SERIAL := FFFFFFFEFFFF
+endif
 
 SRCS := $(wildcard *.c)
 SRCS += $(wildcard USB/*.c)
@@ -41,10 +47,21 @@ DEPS  = $(SRCS:.c=.d)
 
 .DEFAULT_GOAL := $(BINARY).bin
 
+ifneq ($(and $(SERIAL),$(DFUSE_SERIAL)),)
+	DFU_FLAGS ?= -S $(SERIAL),$(DFUSE_SERIAL)
+else ifneq ($(SERIAL),)
+	DFU_FLAGS ?= -S $(SERIAL)
+endif
+
+%.dfu-flash: %.bin
+	$(DFU_UTIL) -d $(APP_VID_PID),$(DFU_VID_PID) $(DFU_FLAGS) -D $(<)
+
 %.dfuse-flash: %.bin
-	$(DFU_UTIL) -d $(DAP42_VID_PID),$(DFUSE_VID_PID) -a 0 -s 0x08000000:leave -D $(<)
+	$(DFU_UTIL) -d $(APP_VID_PID),$(DFUSE_VID_PID) $(DFU_FLAGS) -a 0 -s 0x08000000:leave -D $(<)
 
 dfuse-flash: $(BINARY).dfuse-flash
+
+dfu-flash: $(BINARY).dfu-flash
 
 clean::
 	@rm -f $(OBJS)

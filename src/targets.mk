@@ -25,24 +25,30 @@ ifeq ($(TARGET),STLINK)
 	TARGET_SPEC_DIR		:= ./stm32f103/stlink
 	LDSCRIPT			?= ./stm32f103/stm32f103x8.ld
 	ARCH				= STM32F1
+	DEFS               += -DDFU_AVAILABLE=0
 endif
 ifeq ($(TARGET),STLINK-DFUBOOT)
 	TARGET_COMMON_DIR	:= ./stm32f103
 	TARGET_SPEC_DIR		:= ./stm32f103/stlink
 	LDSCRIPT			?= ./stm32f103/stm32f103x8-dfuboot.ld
 	ARCH				= STM32F1
+	DEFS               += -DDFU_AVAILABLE=1
+	DFU_VID_PID        := 1209:db42
 endif
 ifeq ($(TARGET),BLUEPILL)
 	TARGET_COMMON_DIR	:= ./stm32f103
 	TARGET_SPEC_DIR		:= ./stm32f103/bluepill
 	LDSCRIPT			?= ./stm32f103/stm32f103x8.ld
 	ARCH				= STM32F1
+	DEFS               += -DDFU_AVAILABLE=0
 endif
 ifeq ($(TARGET),BLUEPILL-DFUBOOT)
 	TARGET_COMMON_DIR	:= ./stm32f103
 	TARGET_SPEC_DIR		:= ./stm32f103/bluepill
 	LDSCRIPT			?= ./stm32f103/stm32f103x8-dfuboot.ld
 	ARCH				= STM32F1
+	DEFS               += -DDFU_AVAILABLE=1
+	DFU_VID_PID        := 1209:db42
 endif
 ifndef ARCH
 $(error Unknown target $(TARGET))

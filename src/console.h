@@ -43,17 +43,10 @@ extern void console_setup(uint32_t baudrate);
 extern void console_reconfigure(uint32_t baudrate, uint32_t databits,
                                 uint32_t stopbits, uint32_t parity);
 
-extern inline void console_send_blocking(uint8_t data) {
-    usart_send_blocking(CONSOLE_TX_USART, data);
-}
-
-extern inline uint8_t console_recv_blocking(void) {
-    return usart_recv_blocking(CONSOLE_RX_USART);
-}
-
+extern void console_send_blocking(uint8_t data);
+extern uint8_t console_recv_blocking(void);
 extern size_t console_send_buffered(const uint8_t* data, size_t num_bytes);
 extern size_t console_recv_buffered(uint8_t* data, size_t max_bytes);
-
-extern void console_set_echo(bool enable);
+extern size_t console_send_buffer_space(void);
 
 #endif

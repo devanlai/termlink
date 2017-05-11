@@ -20,19 +20,57 @@
 #define COMPOSITE_USB_CONF_H_INCLUDED
 
 #include "usb_common.h"
+#include "config.h"
 
 #define USB_CDC_MAX_PACKET_SIZE 64
 #define USB_SERIAL_NUM_LENGTH   24
 
-#define ENDP_CDC_DATA_OUT       0x01
-#define ENDP_CDC_DATA_IN        0x82
-#define ENDP_CDC_COMM_IN        0x83
+enum {
+    ENDP_CONTROL_OUT = 0x00,
+    ENDP_CDC_DATA_OUT,
 
-#define INTF_CDC_COMM           0
-#define INTF_CDC_DATA           1
-#define INTF_DFU                2
+    HIGHEST_OUT_ENDPOINT
+};
+
+enum {
+    ENDP_CONTROL_IN = 0x80,
+    ENDP_CDC_DATA_IN,
+    ENDP_CDC_COMM_IN,
+
+    HIGHEST_IN_ENDPOINT,
+};
+
+enum {
+    INTF_CDC_COMM,
+    INTF_CDC_DATA,
+#if DFU_AVAILABLE
+    INTF_DFU,
+#endif
+};
+
+enum {
+    STR_NONE = 0,
+    STR_MANUFACTURER,
+    STR_PRODUCT,
+    STR_SERIAL,
+    STR_CDC_INTF_ASSOC_DESC,
+    STR_CDC_CONTROL_INTF,
+    STR_CDC_DATA_INTF,
+#if DFU_AVAILABLE
+    STR_DFU_INTF,
+#endif
+};
+
+#define USB_MAX_CONTROL_CLASS_CALLBACKS 8
+#define USB_MAX_SET_CONFIG_CALLBACKS    8
+#define USB_MAX_RESET_CALLBACKS 8
 
 extern void cmp_set_usb_serial_number(const char* serial);
 extern usbd_device* cmp_usb_setup(void);
+extern bool cmp_usb_configured(void);
+extern void cmp_usb_register_control_class_callback(uint16_t interface,
+                                                    usbd_control_callback callback);
+extern void cmp_usb_register_set_config_callback(usbd_set_config_callback callback);
+extern void cmp_usb_register_reset_callback(GenericCallback callback);
 
 #endif

@@ -24,6 +24,7 @@
 #define DEFAULT_BAUDRATE 115200
 
 #define CONSOLE_USART USART2
+#define CONSOLE_SPLIT_USART 0
 #define CONSOLE_TX_BUFFER_SIZE 128
 #define CONSOLE_RX_BUFFER_SIZE 128
 
@@ -53,6 +54,8 @@
 #ifndef USART_SR_TXE
 #define USART_SR_TXE USART_ISR_TXE
 #endif
+
+#define DFU_AVAILABLE 1
 
 /* Word size for usart_recv and usart_send */
 typedef uint8_t usart_word_t;
