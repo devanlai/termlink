@@ -199,8 +199,30 @@ size_t console_send_buffered(const uint8_t* data, size_t num_bytes) {
 
 size_t console_recv_buffered(uint8_t* data, size_t max_bytes) {
     size_t bytes_read = 0;
-    while (!console_rx_buffer_empty() && (bytes_read < max_bytes)) {
-        data[bytes_read++] = console_rx_buffer_get();
+    if (max_bytes == 1) {
+        if (!console_rx_buffer_empty()) {
+            *data = console_rx_buffer_get();
+            bytes_read = 1;
+        }
+    } else if (!console_rx_buffer_empty()) {
+        uint16_t console_rx_tail = (CONSOLE_RX_BUFFER_SIZE - DMA_CNDTR(CONSOLE_RX_DMA_CONTROLLER, CONSOLE_RX_DMA_CHANNEL)) % CONSOLE_RX_BUFFER_SIZE;
+        if (console_rx_head > console_rx_tail) {
+            while (console_rx_head < CONSOLE_RX_BUFFER_SIZE && bytes_read < max_bytes) {
+                data[bytes_read++] = console_rx_buffer[console_rx_head++];
+            }
+            if (console_rx_head == CONSOLE_RX_BUFFER_SIZE) {
+                console_rx_head = 0;
+            }
+        }
+
+        if ((bytes_read < max_bytes) && (console_rx_head < console_rx_tail)) {
+            while (console_rx_head < console_rx_tail && bytes_read < max_bytes) {
+                data[bytes_read++] = console_rx_buffer[console_rx_head++];
+            }
+            if (console_rx_head == CONSOLE_RX_BUFFER_SIZE) {
+                console_rx_head = 0;
+            }
+        }
     }
 
     return bytes_read;
