@@ -17,6 +17,8 @@
  */
 
 #include <libopencm3/cm3/nvic.h>
+#include <libopencm3/stm32/dma.h>
+#include <libopencm3/stm32/rcc.h>
 
 #include "console.h"
 #include "target.h"
@@ -37,10 +39,28 @@ void console_setup(uint32_t baudrate) {
     usart_enable(CONSOLE_TX_USART);
 
     nvic_enable_irq(CONSOLE_TX_USART_NVIC_LINE);
+
+#if CONSOLE_RX_DMA_AVAILABLE
+    rcc_periph_clock_enable(CONSOLE_RX_DMA_CLOCK);
+#endif
 }
 
 void console_tx_buffer_clear(void);
 void console_rx_buffer_clear(void);
+
+#define IS_POW_OF_TWO(X) (((X) & ((X)-1)) == 0)
+_Static_assert(IS_POW_OF_TWO(CONSOLE_TX_BUFFER_SIZE),
+               "Unmasked circular buffer size must be a power of two");
+_Static_assert(CONSOLE_TX_BUFFER_SIZE <= UINT16_MAX/2,
+               "Buffer size too big for unmasked circular buffer");
+
+static volatile uint8_t console_tx_buffer[CONSOLE_TX_BUFFER_SIZE];
+static volatile uint8_t console_rx_buffer[CONSOLE_RX_BUFFER_SIZE];
+
+static volatile uint16_t console_tx_head = 0;
+static volatile uint16_t console_tx_tail = 0;
+
+static uint16_t console_rx_head = 0;
 
 void console_reconfigure(uint32_t baudrate, uint32_t databits, uint32_t stopbits,
                          uint32_t parity) {
@@ -50,11 +70,11 @@ void console_reconfigure(uint32_t baudrate, uint32_t databits, uint32_t stopbits
     usart_disable(CONSOLE_RX_USART);
 #endif
 
-    usart_disable_rx_interrupt(CONSOLE_RX_USART);
+    usart_disable_rx_dma(CONSOLE_RX_USART);
     usart_disable_tx_interrupt(CONSOLE_TX_USART);
     nvic_disable_irq(CONSOLE_TX_USART_NVIC_LINE);
 #if CONSOLE_SPLIT_USART
-    nvic_disable_irq(CONSOLE_RX_USART_NVIC_LINE);
+    nvic_disable_irq(CONSOLE_RX_DMA_NVIC_LINE);
 #endif
 
     console_tx_buffer_clear();
@@ -64,7 +84,11 @@ void console_reconfigure(uint32_t baudrate, uint32_t databits, uint32_t stopbits
         /* usart_set_databits counts parity bits as "data" bits */
         databits += 1;
     }
-
+#if CONSOLE_SPLIT_USART
+    usart_set_mode(CONSOLE_TX_USART, CONSOLE_USART_MODE & ~USART_MODE_RX);
+#else
+    usart_set_mode(CONSOLE_TX_USART, CONSOLE_USART_MODE);
+#endif
     usart_set_baudrate(CONSOLE_TX_USART, baudrate);
     usart_set_databits(CONSOLE_TX_USART, databits);
     usart_set_stopbits(CONSOLE_TX_USART, stopbits);
@@ -79,37 +103,37 @@ void console_reconfigure(uint32_t baudrate, uint32_t databits, uint32_t stopbits
     usart_set_parity(CONSOLE_RX_USART, parity);
 #endif
 
+    dma_channel_reset(CONSOLE_RX_DMA_CONTROLLER, CONSOLE_RX_DMA_CHANNEL);
+
+    // Configure RX DMA...
+    dma_set_peripheral_address(CONSOLE_RX_DMA_CONTROLLER, CONSOLE_RX_DMA_CHANNEL, (uint32_t)&USART_DR(CONSOLE_RX_USART));
+    dma_set_memory_address(CONSOLE_RX_DMA_CONTROLLER, CONSOLE_RX_DMA_CHANNEL, (uint32_t)console_rx_buffer);
+    dma_set_number_of_data(CONSOLE_RX_DMA_CONTROLLER, CONSOLE_RX_DMA_CHANNEL, CONSOLE_RX_BUFFER_SIZE);
+    dma_set_read_from_peripheral(CONSOLE_RX_DMA_CONTROLLER, CONSOLE_RX_DMA_CHANNEL);
+    dma_enable_memory_increment_mode(CONSOLE_RX_DMA_CONTROLLER, CONSOLE_RX_DMA_CHANNEL);
+    dma_set_peripheral_size(CONSOLE_RX_DMA_CONTROLLER, CONSOLE_RX_DMA_CHANNEL, DMA_CCR_PSIZE_8BIT);
+    dma_set_memory_size(CONSOLE_RX_DMA_CONTROLLER, CONSOLE_RX_DMA_CHANNEL, DMA_CCR_MSIZE_8BIT);
+    dma_set_priority(CONSOLE_RX_DMA_CONTROLLER, CONSOLE_RX_DMA_CHANNEL, DMA_CCR_PL_HIGH);
+    dma_enable_circular_mode(CONSOLE_RX_DMA_CONTROLLER, CONSOLE_RX_DMA_CHANNEL);
+
+    //dma_enable_transfer_complete_interrupt(CONSOLE_RX_DMA_CONTROLLER, CONSOLE_RX_DMA_CHANNEL);
+
+    dma_enable_channel(CONSOLE_RX_DMA_CONTROLLER, CONSOLE_RX_DMA_CHANNEL);
+
+    usart_enable_rx_dma(CONSOLE_RX_USART);
+    nvic_enable_irq(CONSOLE_TX_USART_NVIC_LINE);
+#if CONSOLE_SPLIT_USART
+    nvic_enable_irq(CONSOLE_RX_DMA_NVIC_LINE);
+#endif
+
     // Re-enable the UART with the new settings
     usart_enable(CONSOLE_TX_USART);
 #if CONSOLE_SPLIT_USART
     usart_enable(CONSOLE_RX_USART);
 #endif
 
-    usart_enable_rx_interrupt(CONSOLE_RX_USART);
-    nvic_enable_irq(CONSOLE_TX_USART_NVIC_LINE);
-#if CONSOLE_SPLIT_USART
-    nvic_enable_irq(CONSOLE_RX_USART_NVIC_LINE);
-#endif
+
 }
-
-#define IS_POW_OF_TWO(X) (((X) & ((X)-1)) == 0)
-_Static_assert(IS_POW_OF_TWO(CONSOLE_RX_BUFFER_SIZE),
-               "Unmasked circular buffer size must be a power of two");
-_Static_assert(IS_POW_OF_TWO(CONSOLE_TX_BUFFER_SIZE),
-               "Unmasked circular buffer size must be a power of two");
-_Static_assert(CONSOLE_RX_BUFFER_SIZE <= UINT16_MAX/2,
-               "Buffer size too big for unmasked circular buffer");
-_Static_assert(CONSOLE_TX_BUFFER_SIZE <= UINT16_MAX/2,
-               "Buffer size too big for unmasked circular buffer");
-
-static volatile uint8_t console_tx_buffer[CONSOLE_TX_BUFFER_SIZE];
-static volatile uint8_t console_rx_buffer[CONSOLE_RX_BUFFER_SIZE];
-
-static volatile uint16_t console_tx_head = 0;
-static volatile uint16_t console_tx_tail = 0;
-
-static volatile uint16_t console_rx_head = 0;
-static volatile uint16_t console_rx_tail = 0;
 
 static bool console_tx_buffer_empty(void) {
     return console_tx_head == console_tx_tail;
@@ -140,16 +164,12 @@ size_t console_send_buffer_space(void) {
 }
 
 static bool console_rx_buffer_empty(void) {
-    return console_rx_head == console_rx_tail;
-}
-
-static bool console_rx_buffer_full(void) {
-    return console_rx_head == ((console_rx_tail + 1) % CONSOLE_RX_BUFFER_SIZE);
-}
-
-static void console_rx_buffer_put(uint8_t data) {
-    console_rx_buffer[console_rx_tail] = data;
-    console_rx_tail = (console_rx_tail + 1) % CONSOLE_RX_BUFFER_SIZE;
+    if (DMA_CCR(CONSOLE_RX_DMA_CONTROLLER, CONSOLE_RX_DMA_CHANNEL) & DMA_CCR_EN) {
+        uint16_t console_rx_tail = (CONSOLE_RX_BUFFER_SIZE - DMA_CNDTR(CONSOLE_RX_DMA_CONTROLLER, CONSOLE_RX_DMA_CHANNEL)) % CONSOLE_RX_BUFFER_SIZE;
+        return console_rx_tail == console_rx_head;
+    } else {
+        return true;
+    }
 }
 
 static uint8_t console_rx_buffer_get(void) {
@@ -160,7 +180,7 @@ static uint8_t console_rx_buffer_get(void) {
 
 void console_rx_buffer_clear(void) {
     console_rx_head = 0;
-    console_rx_tail = 0;
+    dma_disable_channel(CONSOLE_RX_DMA_CONTROLLER, CONSOLE_RX_DMA_CHANNEL);
 }
 
 size_t console_send_buffered(const uint8_t* data, size_t num_bytes) {
@@ -195,12 +215,14 @@ uint8_t console_recv_blocking(void) {
 }
 
 void CONSOLE_RX_USART_IRQ_NAME(void) {
+    /*
     if (usart_get_interrupt_source(CONSOLE_RX_USART, USART_SR_RXNE)) {
         uint8_t received_byte = (uint8_t)usart_recv(CONSOLE_RX_USART);
         if (!console_rx_buffer_full()) {
             console_rx_buffer_put(received_byte);
         }
     }
+    */
 
 #if !CONSOLE_SPLIT_USART
     if (usart_get_interrupt_source(CONSOLE_TX_USART, USART_SR_TXE)) {

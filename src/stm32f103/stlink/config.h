@@ -45,6 +45,12 @@
 #define CONSOLE_RX_USART_IRQ_NAME  usart3_isr
 #define CONSOLE_RX_USART_NVIC_LINE NVIC_USART3_IRQ
 
+#define CONSOLE_RX_DMA_AVAILABLE 1
+#define CONSOLE_RX_DMA_CONTROLLER DMA1
+#define CONSOLE_RX_DMA_CLOCK RCC_DMA1
+#define CONSOLE_RX_DMA_CHANNEL DMA_CHANNEL3
+#define CONSOLE_RX_DMA_NVIC_LINE NVIC_DMA1_CHANNEL3_IRQ
+#define CONSOLE_RX_DMA_IRQ_NAME dma1_channel3_isr
 /* Word size for usart_recv and usart_send */
 typedef uint16_t usart_word_t;
 
