@@ -250,6 +250,14 @@ static bool cdc_uart_set_line_coding(const struct usb_cdc_line_coding* line_codi
         return false;
     }
 
+    if ((current_line_coding.dwDTERate == line_coding->dwDTERate)
+     && (current_line_coding.bCharFormat == line_coding->bCharFormat)
+     && (current_line_coding.bParityType == line_coding->bParityType)
+     && (current_line_coding.bDataBits == databits)) {
+        // The line coding is the same as before
+        return true;
+    }
+
     uint32_t stopbits;
     switch (line_coding->bCharFormat) {
         case USB_CDC_1_STOP_BITS:
