@@ -54,6 +54,16 @@
 /* Word size for usart_recv and usart_send */
 typedef uint16_t usart_word_t;
 
+#define MODEM_GPIO_OPEN_DRAIN 1
+
+#define MODEM_DTR_AVAILABLE 1
+#define MODEM_DTR_GPIO_PORT GPIOB
+#define MODEM_DTR_GPIO_PIN  GPIO14
+
+#define MODEM_RTS_AVAILABLE 1
+#define MODEM_RTS_GPIO_PORT GPIOB
+#define MODEM_RTS_GPIO_PIN  GPIO13
+
 #define LED_OPEN_DRAIN         0
 
 #endif

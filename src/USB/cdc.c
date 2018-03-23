@@ -112,12 +112,6 @@ static int cdc_control_class_request(usbd_device *usbd_dev,
 
     switch (req->bRequest) {
         case USB_CDC_REQ_SET_CONTROL_LINE_STATE: {
-            /*
-             * This Linux cdc_acm driver requires this to be implemented
-             * even though it's optional in the CDC spec, and we don't
-             * advertise it in the ACM functional descriptor.
-             */
-
             bool dtr = (req->wValue & (1 << 0)) != 0;
             bool rts = (req->wValue & (1 << 1)) != 0;
 
@@ -325,14 +319,15 @@ void cdc_uart_app_reset(void) {
 }
 
 void cdc_uart_app_setup(usbd_device* usbd_dev,
-                   GenericCallback cdc_tx_cb,
-                   GenericCallback cdc_rx_cb) {
+                        SetControlLineStateFunction cdc_gpio_cb,
+                        GenericCallback cdc_tx_cb,
+                        GenericCallback cdc_rx_cb) {
     cdc_uart_tx_callback = cdc_tx_cb;
     cdc_uart_rx_callback = cdc_rx_cb;
 
     cdc_setup(usbd_dev,
               &cdc_uart_on_host_tx,
-              NULL,
+              cdc_gpio_cb,
               &cdc_uart_set_line_coding, &cdc_uart_get_line_coding);
     cmp_usb_register_reset_callback(cdc_uart_app_reset);
 }

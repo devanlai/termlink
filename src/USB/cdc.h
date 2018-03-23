@@ -39,6 +39,7 @@ extern void cdc_setup(usbd_device* usbd_dev,
 extern bool cdc_send_data(const uint8_t* data, size_t len);
 
 extern void cdc_uart_app_setup(usbd_device* usbd_dev,
+                               SetControlLineStateFunction cdc_gpio_cb,
                                GenericCallback cdc_tx_cb,
                                GenericCallback cdc_rx_cb);
 

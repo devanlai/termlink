@@ -24,5 +24,7 @@ extern void gpio_setup(void);
 extern void target_console_init(void);
 extern void led_num(uint8_t value);
 extern void led_bit(uint8_t position, bool state);
+extern void target_set_dtr(bool state);
+extern void target_set_rts(bool state);
 
 #endif

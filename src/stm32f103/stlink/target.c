@@ -38,10 +38,34 @@ void gpio_setup(void) {
     rcc_periph_clock_enable(RCC_GPIOB);
 
     /* Setup LEDs as open-drain outputs */
-    const uint8_t mode = GPIO_MODE_OUTPUT_10_MHZ;
-    const uint8_t conf = (LED_OPEN_DRAIN ? GPIO_CNF_OUTPUT_OPENDRAIN
-                                         : GPIO_CNF_OUTPUT_PUSHPULL);
-    gpio_set_mode(GPIOA, mode, conf, GPIO9);
+    {
+        const uint8_t mode = GPIO_MODE_OUTPUT_10_MHZ;
+        const uint8_t conf = (LED_OPEN_DRAIN ? GPIO_CNF_OUTPUT_OPENDRAIN
+                                             : GPIO_CNF_OUTPUT_PUSHPULL);
+        gpio_set_mode(GPIOA, mode, conf, GPIO9);
+    }
+
+    /* Setup DTR, inactive high */
+    #if MODEM_DTR_AVAILABLE
+    {
+        const uint8_t mode = GPIO_MODE_OUTPUT_10_MHZ;
+        const uint8_t conf = (MODEM_GPIO_OPEN_DRAIN ? GPIO_CNF_OUTPUT_OPENDRAIN
+                                                    : GPIO_CNF_OUTPUT_PUSHPULL);
+        gpio_set(MODEM_DTR_GPIO_PORT, MODEM_DTR_GPIO_PIN);
+        gpio_set_mode(MODEM_DTR_GPIO_PORT, mode, conf, MODEM_DTR_GPIO_PIN);
+    }
+    #endif
+
+    /* Setup RTS, inactive high */
+    #if MODEM_RTS_AVAILABLE
+    {
+        const uint8_t mode = GPIO_MODE_OUTPUT_10_MHZ;
+        const uint8_t conf = (MODEM_GPIO_OPEN_DRAIN ? GPIO_CNF_OUTPUT_OPENDRAIN
+                                                    : GPIO_CNF_OUTPUT_PUSHPULL);
+        gpio_set(MODEM_RTS_GPIO_PORT, MODEM_RTS_GPIO_PIN);
+        gpio_set_mode(MODEM_RTS_GPIO_PORT, mode, conf, MODEM_RTS_GPIO_PIN);
+    }
+    #endif
 }
 
 void target_console_init(void){
@@ -81,4 +105,28 @@ void led_num(uint8_t value) {
     } else {
         gpio_clear(GPIOA, GPIO9);
     }
+}
+
+void target_set_dtr(bool state) {
+#if MODEM_DTR_AVAILABLE
+    if (state) {
+        gpio_clear(MODEM_DTR_GPIO_PORT, MODEM_DTR_GPIO_PIN);
+    } else {
+        gpio_set(MODEM_DTR_GPIO_PORT, MODEM_DTR_GPIO_PIN);
+    }
+#else
+    (void)state;
+#endif
+}
+
+void target_set_rts(bool state) {
+#if MODEM_RTS_AVAILABLE
+    if (state) {
+        gpio_clear(MODEM_RTS_GPIO_PORT, MODEM_RTS_GPIO_PIN);
+    } else {
+        gpio_set(MODEM_RTS_GPIO_PORT, MODEM_RTS_GPIO_PIN);
+    }
+#else
+    (void)state;
+#endif
 }

@@ -65,6 +65,11 @@ static void on_dfu_request(void) {
     do_reset_to_dfu = true;
 }
 
+static void update_modem_gpio(bool dtr, bool rts) {
+    target_set_dtr(dtr);
+    target_set_rts(rts);
+}
+
 int main(void) {
     DFU_maybe_jump_to_bootloader();
 
@@ -86,7 +91,7 @@ int main(void) {
     }
 
     usbd_device* usbd_dev = cmp_usb_setup();
-    cdc_uart_app_setup(usbd_dev, &on_usb_activity, &on_usb_activity);
+    cdc_uart_app_setup(usbd_dev, &update_modem_gpio, &on_usb_activity, &on_usb_activity);
 
     if (DFU_AVAILABLE) {
         dfu_setup(usbd_dev, &on_dfu_request);
